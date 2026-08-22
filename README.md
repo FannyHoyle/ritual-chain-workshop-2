@@ -106,3 +106,33 @@ betting model is plain pari-mutuel: two running totals and one mapping per side.
 - Ritual Chain docs — <https://docs.ritualfoundation.org>
 - dApp skills — <https://github.com/ritual-foundation/ritual-dapp-skills>
 - Explorer — <https://explorer.ritualfoundation.org> · Faucet — <https://faucet.ritualfoundation.org>
+## Builder Notes: Scheduler and Idempotency
+
+The Scheduler was the Ritual-specific part that I found most interesting.
+
+A normal prediction market could rely on someone calling a resolve function
+manually.
+
+This workshop instead schedules the resolution and gives it multiple
+opportunities to execute.
+
+The part I initially misunderstood was the relationship between cancellation
+and idempotency.
+
+I assumed that once the remaining scheduled executions were cancelled, there
+was no need to think about them anymore.
+
+After tracing the callback flow, I realized that the contract still needs to
+be safe if a callback arrives after the market has already reached a final
+state.
+
+That led me to think about the resolution process as:
+
+Scheduler
+→ asks the contract to execute
+
+Contract
+→ checks whether the operation is still relevant
+
+This makes the system more robust than simply assuming that every scheduled
+execution will happen exactly once.
